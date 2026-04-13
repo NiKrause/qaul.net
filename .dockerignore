@@ -1,0 +1,4 @@
+# For: docker build -f utilities/qauld-docker/Dockerfile -t qauld-local:test .
+.git
+**/target
+node_modules

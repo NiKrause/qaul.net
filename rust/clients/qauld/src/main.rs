@@ -66,6 +66,20 @@ async fn main() {
         std::thread::sleep(Duration::from_millis(10));
     }
 
+    if let Some(instance) = libqaul::api::get_instance() {
+        // Use println so output shows in container logs without RUST_LOG=info (pretty_env_logger defaults to error on stderr).
+        println!("node PeerId: {}", instance.node_id());
+        let addrs = instance.listen_multiaddrs();
+        if addrs.is_empty() {
+            println!("node listen multiaddrs: (none)");
+        } else {
+            println!("node listen multiaddrs:");
+            for line in addrs {
+                println!("  {}", line);
+            }
+        }
+    }
+
     // if no account, creating new accounts
     if libqaul::node::user_accounts::UserAccounts::len() == 0 {
         let user_name: String;

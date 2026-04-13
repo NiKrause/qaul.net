@@ -88,6 +88,9 @@ pub struct Libqaul {
 
     /// Whether this instance has finished initializing
     initialized: AtomicBool,
+
+    /// LAN/Internet swarm listen and observed external multiaddrs, filled at the start of [`Libqaul::run`].
+    network_listen_addrs: Arc<std::sync::RwLock<Vec<String>>>,
 }
 
 impl Libqaul {
@@ -187,6 +190,7 @@ impl Libqaul {
             rpc_receiver,
             sys_receiver,
             initialized: AtomicBool::new(false),
+            network_listen_addrs: Arc::new(std::sync::RwLock::new(Vec::new())),
         });
 
         instance
@@ -323,6 +327,11 @@ impl Libqaul {
         self.node.id()
     }
 
+    /// Listen and observed multiaddrs for the LAN and Internet swarms (see [`Libqaul::run`]).
+    pub fn listen_multiaddrs(&self) -> Vec<String> {
+        self.network_listen_addrs.read().unwrap().clone()
+    }
+
     /// Get reference to the router module
     pub fn router(&self) -> &RouterModule {
         &self.router
@@ -352,6 +361,23 @@ impl Libqaul {
         let conn = Connections::init().await;
         let mut internet = conn.internet.unwrap();
         let mut lan = conn.lan.unwrap();
+
+        {
+            let mut lines = Vec::new();
+            for addr in lan.swarm.listeners() {
+                lines.push(format!("lan {}", addr));
+            }
+            for addr in lan.swarm.external_addresses() {
+                lines.push(format!("lan observed {}", addr));
+            }
+            for addr in internet.swarm.listeners() {
+                lines.push(format!("internet {}", addr));
+            }
+            for addr in internet.swarm.external_addresses() {
+                lines.push(format!("internet observed {}", addr));
+            }
+            *self.network_listen_addrs.write().unwrap() = lines;
+        }
 
         // Set up all the tickers for periodic tasks
         let mut rpc_ticker = Ticker::new(Duration::from_millis(10));
