@@ -1,0 +1,37 @@
+# Shipped as /etc/qaul/config.default.yaml — preset "default" or "community" (entrypoint.sh).
+# Used when /srv/qaul/config.yaml is missing, or when QAUL_OVERWRITE_DEFAULT_CONFIG=1.
+# IPv4 community bootstrap peer enabled; IPv6 disabled.
+node:
+  initialized: 0
+  id: ""
+  keys: ""
+lan:
+  active: true
+  listen:
+    - /ip4/0.0.0.0/udp/0/quic-v1
+    - /ip4/0.0.0.0/tcp/0
+    - /ip6/::/udp/0/quic-v1
+    - /ip6/::/tcp/0
+internet:
+  active: true
+  do_listen: false
+  peers:
+    - address: /ip4/144.91.74.192/udp/9229/quic-v1
+      name: "qaul Community Node [IPv4]"
+      enabled: true
+    - address: /ip6/2a02:c207:3004:3887::1/udp/9229/quic-v1
+      name: "qaul Community Node [IPv6]"
+      enabled: false
+  listen:
+    - /ip4/0.0.0.0/udp/0/quic-v1
+    - /ip4/0.0.0.0/tcp/0
+    - /ip6/::/udp/0/quic-v1
+    - /ip6/::/tcp/0
+user_accounts: []
+debug:
+  log: false
+routing:
+  sending_table_period: 10
+  ping_neighbour_period: 5
+  hop_count_penalty: 10
+  maintain_period_limit: 300

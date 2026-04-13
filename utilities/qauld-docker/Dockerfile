@@ -27,8 +27,19 @@ ENV GID=1000
 ENV UID=1000
 ENV PORT=9229
 ENV NAME="Self-hosted Qaul"
+# Must match rust/libqaul Cargo.toml version (used when seeding /srv/qaul/version with entrypoint).
+ARG LIBQAUL_PKG_VERSION=2.0.0-rc.5
+ENV LIBQAUL_PKG_VERSION=$LIBQAUL_PKG_VERSION
 
 COPY --from=builder --chown=${UID}:${GID} /qaul/rust/target/release/qauld /usr/local/bin/qauld
+
+COPY utilities/qauld-docker/config.default.yaml /etc/qaul/config.default.yaml
+COPY utilities/qauld-docker/config.stock.yaml /etc/qaul/config.stock.yaml
+COPY utilities/qauld-docker/config.dual.yaml /etc/qaul/config.dual.yaml
+COPY utilities/qauld-docker/entrypoint.sh /entrypoint.sh
+RUN chmod 755 /entrypoint.sh \
+    && chown ${UID}:${GID} /etc/qaul/config.default.yaml \
+       /etc/qaul/config.stock.yaml /etc/qaul/config.dual.yaml
 
 EXPOSE 9229
 USER ${UID}:${GID}
@@ -36,4 +47,6 @@ USER ${UID}:${GID}
 WORKDIR /srv/qaul
 
 ENV RUST_BACKTRACE=1
-ENTRYPOINT ["/bin/sh", "-c", "exec /usr/local/bin/qauld --name \"$NAME\" --port \"$PORT\""]
+# QAUL_CONFIG_PRESET selects /etc/qaul/config.{default,stock,dual}.yaml when seeding (see entrypoint.sh).
+# Optional: QAUL_OVERWRITE_DEFAULT_CONFIG=1 replaces config on every start (destructive).
+ENTRYPOINT ["/entrypoint.sh"]

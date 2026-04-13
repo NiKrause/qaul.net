@@ -1,0 +1,55 @@
+# qauld uses WORKDIR /srv/qaul and reads config.yaml there.
+#
+# Baked-in templates (image inspiraluna/qauld with entrypoint): set env QAUL_CONFIG_PRESET to
+#   default | community  — IPv4 community bootstrap on (default)
+#   stock               — no bootstrap peers (libqaul-like defaults)
+#   dual | both         — IPv4 + IPv6 community bootstrap on
+# Optional: QAUL_OVERWRITE_DEFAULT_CONFIG=1 re-seeds config every start (destructive).
+# With persistent storage, mount /srv/qaul and omit overwrite unless you intend a reset.
+#
+# Akash does not define a human-readable “deployment name” inside the SDL; the lease title is
+# chosen in the client when you create the deployment. To name this *node* for qauld/libqaul,
+# set NAME (passed through the image entrypoint as `qauld --name`).
+---
+version: "2.0"
+services:
+  qauld:
+    image: inspiraluna/qauld:latest
+    env:
+      - "NAME=Akash instance"
+      # Change preset per deployment (or duplicate this service with different env).
+      - QAUL_CONFIG_PRESET=default
+      # - QAUL_CONFIG_PRESET=stock
+      # - QAUL_CONFIG_PRESET=dual
+      # - QAUL_OVERWRITE_DEFAULT_CONFIG=1
+    expose:
+      - port: 9229
+        as: 9229
+        proto: tcp
+        to:
+          - global: true
+            ip: qauld
+profiles:
+  compute:
+    qauld:
+      resources:
+        cpu:
+          units: 1
+        memory:
+          size: 4gi
+        storage:
+          - size: 1Gi
+  placement:
+    dcloud:
+      pricing:
+        qauld:
+          denom: uact
+          amount: 100000
+deployment:
+  qauld:
+    dcloud:
+      profile: qauld
+      count: 1
+endpoints:
+  qauld:
+    kind: ip

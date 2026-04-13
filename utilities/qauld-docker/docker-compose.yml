@@ -4,6 +4,9 @@ services:
   qauld-home:
     image: qaulnet/qauld:latest
     restart: unless-stopped
+    # With inspiraluna/qauld entrypoint: QAUL_CONFIG_PRESET=default|stock|dual ; QAUL_OVERWRITE_DEFAULT_CONFIG=1 optional
+    # environment:
+    #   - QAUL_CONFIG_PRESET=stock
     volumes:
       - /your/path/to/config:/srv/qaul
     ports:
