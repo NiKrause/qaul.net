@@ -39,6 +39,7 @@ use rpc::sys::Sys;
 use rpc::{Rpc, RpcModule};
 use services::messaging::Messaging;
 use services::{Services, ServicesModule};
+use storage::configuration::Configuration;
 use storage::StorageModule;
 use utilities::filelogger::FileLogger;
 use utilities::timestamp::Timestamp;
@@ -363,19 +364,41 @@ impl Libqaul {
         let mut lan = conn.lan.unwrap();
 
         {
+            let config = Configuration::get();
             let mut lines = Vec::new();
-            for addr in lan.swarm.listeners() {
+
+            // Swarm listener endpoints can stay empty until the first poll; include config as fallback.
+            let lan_listen: Vec<String> = lan.swarm.listeners().map(|a| a.to_string()).collect();
+            let inet_listen: Vec<String> = internet
+                .swarm
+                .listeners()
+                .map(|a| a.to_string())
+                .collect();
+
+            for addr in &lan_listen {
                 lines.push(format!("lan {}", addr));
+            }
+            if lan_listen.is_empty() {
+                for l in &config.lan.listen {
+                    lines.push(format!("lan (config) {}", l));
+                }
             }
             for addr in lan.swarm.external_addresses() {
                 lines.push(format!("lan observed {}", addr));
             }
-            for addr in internet.swarm.listeners() {
+
+            for addr in &inet_listen {
                 lines.push(format!("internet {}", addr));
+            }
+            if inet_listen.is_empty() {
+                for l in &config.internet.listen {
+                    lines.push(format!("internet (config) {}", l));
+                }
             }
             for addr in internet.swarm.external_addresses() {
                 lines.push(format!("internet observed {}", addr));
             }
+
             *self.network_listen_addrs.write().unwrap() = lines;
         }
 
